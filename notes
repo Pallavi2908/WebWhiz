@@ -1,0 +1,25 @@
+Given the project's nature (and to keep costs low and avoid extra API dependencies), I recommend starting with the **free Hugging Face model** (`sentence-transformers/all-MiniLM-L6-v2`). It is:
+
+- Lightweight (only 80MB)
+- Fast (about 0.15 seconds per embedding on CPU)
+- Good for semantic similarity tasks
+
+which vector DB to use: chromaDB
+
+1. quick acess to data w/o high latency
+2. high throughput
+3. scalable
+
+how ChromaDB is useful for this case:
+LLM-Centric Design:
+
+Purpose-built for semantic search in NLP applications
+
+Optimized for exactly your query-similarity matching use case
+
+Seamless integration with LangChain and LLM workflows
+
+Simplified Architecture:
+
+---python -m playwright install :
+It downloads and installs browser binaries (like headless Chromium, Firefox, and WebKit) that Playwright needs to run and automate browsers.

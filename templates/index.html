@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Tool</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #333;
+        line-height: 1.6;
+      }
+
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .search-container {
+        display: flex;
+        margin-bottom: 20px;
+      }
+
+      #search-input {
+        flex: 1;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ddd;
+        border-radius: 4px 0 0 4px;
+        outline: none;
+      }
+
+      #search-button {
+        padding: 12px 20px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 0 4px 4px 0;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      #search-button:hover {
+        background-color: #2980b9;
+      }
+
+      .results-container {
+        margin-top: 30px;
+      }
+
+      .result-item {
+        background-color: #f9f9f9;
+        border-left: 4px solid #3498db;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 0 4px 4px 0;
+      }
+
+      .result-url {
+        color: #3498db;
+        font-size: 14px;
+        margin-bottom: 5px;
+        word-break: break-all;
+      }
+
+      .result-content {
+        margin-top: 10px;
+      }
+
+      .similar-tag {
+        display: inline-block;
+        background-color: #e8f4fc;
+        color: #2980b9;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-left: 10px;
+        vertical-align: middle;
+      }
+
+      .loading {
+        text-align: center;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .error {
+        color: #e74c3c;
+        padding: 10px;
+        background-color: #fdecea;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Search Tool</h1>
+
+    <div class="search-container">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Enter your search query..."
+      />
+      <button id="search-button">Search</button>
+    </div>
+
+    <div id="error-message" class="error" style="display: none"></div>
+
+    <div id="similar-result" style="display: none">
+      <div class="result-item">
+        <h3 id="similar-query"></h3>
+        <div class="similar-tag">Similar to previous search</div>
+        <div id="similar-summary" class="result-content"></div>
+        <div class="result-url" id="similar-url"></div>
+      </div>
+      <p>
+        This query is similar to one you searched before. Showing cached
+        results.
+      </p>
+      <button id="search-anyway">Search Anyway</button>
+    </div>
+
+    <div id="loading" class="loading">
+      <p>Searching and analyzing results...</p>
+    </div>
+
+    <div id="results-container" class="results-container"></div>
+
+    <script>
+      document
+        .getElementById("search-button")
+        .addEventListener("click", performSearch);
+      document
+        .getElementById("search-input")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") performSearch();
+        });
+      document
+        .getElementById("search-anyway")
+        .addEventListener("click", function () {
+          document.getElementById("similar-result").style.display = "none";
+          performSearch(true);
+        });
+
+      function performSearch(force = false) {
+        const query = document.getElementById("search-input").value.trim();
+        if (!query) return;
+
+        document.getElementById("error-message").style.display = "none";
+        document.getElementById("results-container").innerHTML = "";
+        document.getElementById("loading").style.display = "block";
+
+        fetch("/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ query: query, force: force }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("loading").style.display = "none";
+
+            if (data.error) {
+              document.getElementById("error-message").textContent = data.error;
+              document.getElementById("error-message").style.display = "block";
+              return;
+            }
+
+            if (data.similar) {
+              document.getElementById("similar-query").textContent =
+                data.similar.query;
+              document.getElementById("similar-summary").textContent =
+                data.similar.summary;
+              document.getElementById("similar-url").textContent =
+                data.similar.url;
+              document.getElementById("similar-result").style.display = "block";
+              return;
+            }
+
+            if (data.results && data.results.length > 0) {
+              const resultsContainer =
+                document.getElementById("results-container");
+              data.results.forEach((result) => {
+                const resultDiv = document.createElement("div");
+                resultDiv.className = "result-item";
+                resultDiv.innerHTML = `
+                            <h3>${result.query || "Search Result"}</h3>
+                            <div class="result-url">${result.url}</div>
+                            <div class="result-content">${result.summary}</div>
+                        `;
+                resultsContainer.appendChild(resultDiv);
+              });
+            } else {
+              resultsContainer.innerHTML =
+                "<p>No results found for your query.</p>";
+            }
+          })
+          .catch((error) => {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("error-message").textContent =
+              "An error occurred during the search.";
+            document.getElementById("error-message").style.display = "block";
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>
